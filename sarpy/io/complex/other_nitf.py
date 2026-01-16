@@ -337,7 +337,7 @@ def extract_sicd(
         # all remaining guess work
         the_sicd.ImageFormation.STBeamComp = 'NO'
         the_sicd.ImageFormation.ImageBeamComp = 'SV' if cmetaa.IF_BEAM_COMP[0] == 'Y' else 'NO'
-        the_sicd.ImageFormation.AzAutofocus = 'NO' if cmetaa.AF_TYPE[0] == 'N' else 'SV'
+        the_sicd.ImageFormation.AzAutofocus = 'NO' if cmetaa.AF_TYPE1.strip() == 'N' else 'SV'
         the_sicd.ImageFormation.RgAutofocus = 'NO'
 
     def try_AIMIDA() -> None:
