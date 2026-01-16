@@ -277,7 +277,7 @@ def calculate_md5(the_path: str, chunk_size: int = 1024*1024) -> str:
         The 32 character MD5 hex digest of the given file
     """
 
-    md5_hash = hashlib.md5()
+    md5_hash = hashlib.md5(usedforsecurity=False)
     with open(the_path, 'rb') as fi:
         for chunk in iter(lambda: fi.read(chunk_size), b''):
             md5_hash.update(chunk)
