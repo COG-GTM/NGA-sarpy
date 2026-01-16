@@ -10,6 +10,7 @@ import os
 import logging
 from datetime import datetime
 from xml.etree import ElementTree
+import defusedxml.ElementTree as DefusedElementTree
 from typing import List, Tuple, Union, Optional
 
 import numpy
@@ -49,11 +50,11 @@ logger = logging.getLogger(__name__)
 
 def _parse_xml(file_name: str,
                without_ns: bool = False) -> Union[ElementTree.Element, Tuple[dict, ElementTree.Element]]:
-    root_node = ElementTree.parse(file_name).getroot()
+    root_node = DefusedElementTree.parse(file_name).getroot()
     if without_ns:
         return root_node
     else:
-        ns = dict([node for _, node in ElementTree.iterparse(file_name, events=('start-ns', ))])
+        ns = dict([node for _, node in DefusedElementTree.iterparse(file_name, events=('start-ns', ))])
         return ns, root_node
 
 

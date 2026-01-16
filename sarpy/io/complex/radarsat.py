@@ -11,6 +11,7 @@ import re
 import os
 from datetime import datetime
 from xml.etree import ElementTree
+import defusedxml.ElementTree as DefusedElementTree
 from typing import Tuple, List, Sequence, Union, Optional
 
 import numpy
@@ -59,9 +60,9 @@ def _parse_xml(file_name: str, without_ns: bool = False) -> ElementTree.Element:
         with open(file_name, 'rb') as fi:
             xml_string = fi.read()
         # Remove the (first) default namespace definition (xmlns="http://some/namespace") and parse
-        return ElementTree.fromstring(re.sub(b'\\sxmlns="[^"]+"', b'', xml_string, count=1))
+        return DefusedElementTree.fromstring(re.sub(b'\\sxmlns="[^"]+"', b'', xml_string, count=1))
     else:
-        return ElementTree.parse(file_name).getroot()
+        return DefusedElementTree.parse(file_name).getroot()
 
 
 def _format_class_str(class_str: str) -> str:

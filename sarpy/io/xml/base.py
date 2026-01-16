@@ -15,6 +15,7 @@ from datetime    import date, datetime
 from io          import StringIO
 from typing      import Dict, Optional
 from xml.etree   import ElementTree
+import defusedxml.ElementTree as DefusedElementTree
 
 from sarpy.compliance import bytes_to_string
 
@@ -190,9 +191,9 @@ def parse_xml_from_string(xml_string):
 
     xml_string = bytes_to_string(xml_string, encoding='utf-8')
 
-    root_node = ElementTree.fromstring(xml_string)
+    root_node = DefusedElementTree.fromstring(xml_string)
     # define the namespace dictionary
-    xml_ns = dict([node for _, node in ElementTree.iterparse(StringIO(xml_string), events=('start-ns',))])
+    xml_ns = dict([node for _, node in DefusedElementTree.iterparse(StringIO(xml_string), events=('start-ns',))])
     if len(xml_ns.keys()) == 0:
         xml_ns = None
     elif '' in xml_ns:
