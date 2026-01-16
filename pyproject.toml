@@ -1,0 +1,63 @@
+[build-system]
+requires = ["setuptools>=45", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sarpy"
+dynamic = ["version"]
+description = "Python tools for reading, writing, and simple processing of complex SAR data and other associated data."
+readme = "README.md"
+license = {text = "MIT License"}
+authors = [
+    {name = "National Geospatial-Intelligence Agency", email = "SARToolboxDev@nga.mil"}
+]
+requires-python = ">=3.8"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+dependencies = [
+    "h5py",
+    "numpy>=1.19.0",
+    "pillow",
+    "scipy",
+    "matplotlib",
+    "shapely>=1.6.4",
+    "lxml>=4.1.1",
+]
+
+[project.optional-dependencies]
+all = [
+    "smart_open[http]",
+    "pytest>=3.3.2",
+    "networkx>=2.5",
+]
+
+[project.urls]
+Homepage = "https://github.com/ngageoint/sarpy"
+
+[tool.setuptools]
+zip-safe = false
+include-package-data = true
+
+[tool.setuptools.dynamic]
+version = {attr = "sarpy.__about__.__version__"}
+
+[tool.setuptools.packages.find]
+exclude = ["tests*"]
+
+[tool.setuptools.package-data]
+sarpy = [
+    "io/complex/sicd_schema/**/*.xsd",
+    "io/phase_history/cphd_schema/**/*.xsd",
+    "io/received/crsd_schema/**/*.xsd",
+    "io/product/sidd_schema/**/*.xsd",
+    "annotation/afrl_rde_schema/**/*.xsd",
+]
