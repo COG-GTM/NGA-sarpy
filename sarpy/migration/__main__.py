@@ -9,7 +9,9 @@ Usage::
 
 __classification__ = "UNCLASSIFIED"
 
+import sys
+
 from sarpy.migration.sarkit_scanner import main
 
 if __name__ == '__main__':
-    main()
+    sys.exit(main())
