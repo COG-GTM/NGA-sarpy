@@ -432,8 +432,8 @@ class CrossDomainValidator:
                 remediation="Classification must be one of: U, R, C, S, T" if not is_valid else "",
             ))
 
-            # Check classification system
-            clsy = security.CLSY.strip()
+            # Check classification system (CLSY is NITF 2.1 only)
+            clsy = (getattr(security, 'CLSY', '') or '').strip()
             if clas != 'U' and not clsy:
                 report.findings.append(ValidationFinding(
                     check_name="CLASSIFICATION_SYSTEM",
@@ -464,9 +464,9 @@ class CrossDomainValidator:
                     nist_control="AC-16",
                 ))
 
-            # Check declassification information
+            # Check declassification information (DCTP is NITF 2.1 only)
             if clas != 'U':
-                dctp = security.DCTP.strip()
+                dctp = (getattr(security, 'DCTP', '') or '').strip()
                 if not dctp:
                     report.findings.append(ValidationFinding(
                         check_name="DECLASSIFICATION_INFO",
@@ -477,10 +477,10 @@ class CrossDomainValidator:
                         remediation="Set declassification type: DD (date), DE (event), X (exempt), etc.",
                     ))
 
-            # Check classification authority
+            # Check classification authority (CAPT is NITF 2.1 only; CAUT exists on both versions)
             if clas != 'U':
-                capt = security.CAPT.strip()
-                caut = security.CAUT.strip()
+                capt = (getattr(security, 'CAPT', '') or '').strip()
+                caut = (getattr(security, 'CAUT', '') or '').strip()
                 has_authority = bool(capt) or bool(caut)
                 report.findings.append(ValidationFinding(
                     check_name="CLASSIFICATION_AUTHORITY",
