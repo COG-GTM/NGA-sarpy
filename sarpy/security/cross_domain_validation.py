@@ -598,7 +598,14 @@ class CrossDomainValidator:
                     nist_control="AC-16",
                 ))
         except Exception as e:
-            logger.debug(f"DES security validation skipped: {e}")
+            report.findings.append(ValidationFinding(
+                check_name="DES_SECURITY_CONSISTENCY",
+                severity=ValidationSeverity.HIGH,
+                passed=False,
+                message=f"Error validating DES security markings: {e}",
+                nist_control="AC-16",
+                remediation="Ensure DES subheaders are readable for security validation",
+            ))
 
     # ── Phase 4: SICD-specific validation ───────────────────────────────
 
@@ -850,7 +857,14 @@ class CrossDomainValidator:
                             remediation="File must be marked with coalition partner country codes for coalition transfer",
                         ))
         except Exception as e:
-            logger.debug(f"Releasability check skipped: {e}")
+            report.findings.append(ValidationFinding(
+                check_name="RELEASABILITY",
+                severity=ValidationSeverity.HIGH,
+                passed=False,
+                message=f"Error checking releasability markings: {e}",
+                nist_control="AC-16",
+                remediation="Ensure NITF security tags are readable and REL field is accessible",
+            ))
 
     # ── Phase 6: Transfer direction validation ──────────────────────────
 
