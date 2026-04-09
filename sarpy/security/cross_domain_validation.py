@@ -115,22 +115,32 @@ class TransferValidationReport:
     detected_codewords: str = ""
     sicd_metadata_present: bool = False
     nitf_version: str = ""
+    strict_mode: bool = False
+
+    @property
+    def _blocking_severities(self) -> tuple:
+        """Severities that block transfer: CRITICAL+HIGH always, MEDIUM in strict mode."""
+        if self.strict_mode:
+            return (ValidationSeverity.CRITICAL, ValidationSeverity.HIGH, ValidationSeverity.MEDIUM)
+        return (ValidationSeverity.CRITICAL, ValidationSeverity.HIGH)
 
     @property
     def passed(self) -> bool:
-        """Transfer is approved only if no CRITICAL or HIGH findings failed."""
+        """Transfer is approved only if no blocking-severity findings failed."""
+        blocking = self._blocking_severities
         return all(
-            f.passed or f.severity not in (ValidationSeverity.CRITICAL, ValidationSeverity.HIGH)
+            f.passed or f.severity not in blocking
             for f in self.findings
         )
 
     @property
     def failure_reasons(self) -> List[str]:
         """List of reasons the transfer failed validation."""
+        blocking = self._blocking_severities
         return [
             f"{f.check_name}: {f.message}"
             for f in self.findings
-            if not f.passed and f.severity in (ValidationSeverity.CRITICAL, ValidationSeverity.HIGH)
+            if not f.passed and f.severity in blocking
         ]
 
     @property
@@ -272,6 +282,7 @@ class CrossDomainValidator:
             file_path=file_path,
             source_domain=self.source_domain,
             target_domain=self.target_domain,
+            strict_mode=self.strict_mode,
         )
 
         # Phase 1: File-level checks
