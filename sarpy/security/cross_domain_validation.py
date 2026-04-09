@@ -569,22 +569,15 @@ class CrossDomainValidator:
             inconsistencies = []
 
             for i in range(des_subheader_offsets.size):
-                subhead_bytes = nitf.get_des_subheader_bytes(i)
-                # DES security tags start at a known offset in the subheader
-                # Check if the classification in the DES matches file-level
-                if len(subhead_bytes) > 25:
-                    # The security section of a DES subheader
-                    # DESID (25 bytes) then DSVER (2 bytes) then security
-                    try:
-                        from sarpy.io.general.nitf_elements.des import DataExtensionHeader
-                        des_header = DataExtensionHeader.from_bytes(subhead_bytes, start=0)
-                        des_clas = des_header.Security.CLAS.strip()
-                        if des_clas and des_clas != file_clas:
-                            inconsistencies.append(
-                                f"DES {i}: CLAS='{des_clas}' (file-level: '{file_clas}')"
-                            )
-                    except Exception:
-                        pass  # Some DES may not follow standard format
+                try:
+                    des_header = nitf.parse_des_subheader(i)
+                    des_clas = des_header.Security.CLAS.strip()
+                    if des_clas and des_clas != file_clas:
+                        inconsistencies.append(
+                            f"DES {i}: CLAS='{des_clas}' (file-level: '{file_clas}')"
+                        )
+                except Exception:
+                    pass  # Some DES may not follow standard format
 
             if inconsistencies:
                 report.findings.append(ValidationFinding(
