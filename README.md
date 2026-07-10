@@ -118,6 +118,16 @@ message indicating the missing optional dependency.
   reading a GeoTIFF DEM, and/or writing a kmz image overlay requires the `pillow` 
   package.
 
+- Exporting high resolution JPEG or PDF image products, presented in the
+  `sarpy.visualization.image_export` module and the
+  `python -m sarpy.utils.export_image` command-line utility, requires the
+  `pillow` package.
+
+- The optional real-time dashboard, presented in the `sarpy.dashboard` subpackage,
+  requires additional web dependencies (`fastapi`, `uvicorn`, `watchdog`, `pillow`)
+  listed in `sarpy/dashboard/requirements.txt`. These are intentionally kept
+  separate from the core library requirements.
+
 - CPHD consistency checks, presented in the `sarpy.consistency` module, depend on 
   `lxml>=4.1.1`, `networkx>=2.5`, `shapely>=1.6.4`, and `pytest>=3.3.2`. Note that these
   are the versions tested for compliance.

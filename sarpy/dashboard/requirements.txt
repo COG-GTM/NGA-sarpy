@@ -1,0 +1,7 @@
+# Extra dependencies for the optional sarpy dashboard subpackage.
+# These are intentionally kept separate from the core sarpy requirements,
+# which remain numpy/scipy only.
+fastapi>=0.100
+uvicorn>=0.23
+watchdog>=3.0
+pillow>=9.0
