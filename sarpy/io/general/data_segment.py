@@ -1631,7 +1631,7 @@ class BandAggregateSegment(DataSegment):
                 return
 
             self.flush()
-            if self._children is not None:
+            if self.close_children and self._children is not None:
                 for entry in self._children:
                     entry.close()
             DataSegment.close(self)
@@ -1689,8 +1689,8 @@ class BlockAggregateSegment(DataSegment):
         close_children : bool
         """
 
-        self.close_children = close_children
         self._close_children = None
+        self.close_children = close_children
 
         self._children = None
         self._formatted_child_arrangement = None
@@ -1898,7 +1898,7 @@ class BlockAggregateSegment(DataSegment):
                 return
 
             self.flush()
-            if self._children is not None:
+            if self.close_children and self._children is not None:
                 for entry in self._children:
                     entry.close()
             DataSegment.close(self)
