@@ -147,7 +147,8 @@ def create_image_export(
     output_format : str
         One of `'JPEG'` or `'PDF'`.
     dpi : int
-        The resolution (dots per inch), only used for PDF output.
+        The resolution (dots per inch). Determines the physical page size for
+        PDF output, and is recorded as resolution metadata for JPEG output.
     quality : int
         The JPEG quality (1-95), only used for JPEG output.
     block_size : None|int|float
@@ -172,8 +173,10 @@ def create_image_export(
             'output_format must be one of {}, got `{}`'.format(
                 sorted(_FORMAT_EXTENSIONS.keys()), output_format))
 
+    close_reader = False
     if isinstance(reader, str):
         reader = open_complex(reader)
+        close_reader = True
 
     extension = os.path.splitext(output_file)[1].lower()
     if extension not in _FORMAT_EXTENSIONS[output_format]:
@@ -181,9 +184,13 @@ def create_image_export(
             'The output file extension `%s` does not match the output format `%s`.',
             extension, output_format)
 
-    image_data = get_orthorectified_array(
-        reader, index=index, pixel_limit=pixel_limit,
-        remap_function=remap_function, block_size=block_size)
+    try:
+        image_data = get_orthorectified_array(
+            reader, index=index, pixel_limit=pixel_limit,
+            remap_function=remap_function, block_size=block_size)
+    finally:
+        if close_reader:
+            reader.close()
 
     img = PIL.Image.fromarray(image_data)
     if output_format == 'JPEG':

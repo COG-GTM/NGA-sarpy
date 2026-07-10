@@ -1,7 +1,5 @@
 import json
 import os
-import unittest
-
 import pytest
 
 from tests import parse_file_entry
@@ -39,8 +37,8 @@ def get_test_reader():
     return reader
 
 
-@unittest.skipIf(len(sicd_files) == 0, 'No sicd files found')
-@unittest.skipIf(PIL is None, 'Pillow is not available')
+@pytest.mark.skipif(len(sicd_files) == 0, reason='No sicd files found')
+@pytest.mark.skipif(PIL is None, reason='Pillow is not available')
 def test_create_image_export_jpg(tmp_path):
     reader = get_test_reader()
     output_file = str(tmp_path / 'export.jpg')
@@ -50,8 +48,8 @@ def test_create_image_export_jpg(tmp_path):
     assert os.path.getsize(output_file) > 0
 
 
-@unittest.skipIf(len(sicd_files) == 0, 'No sicd files found')
-@unittest.skipIf(PIL is None, 'Pillow is not available')
+@pytest.mark.skipif(len(sicd_files) == 0, reason='No sicd files found')
+@pytest.mark.skipif(PIL is None, reason='Pillow is not available')
 def test_create_image_export_pdf(tmp_path):
     reader = get_test_reader()
     output_file = str(tmp_path / 'export.pdf')
@@ -61,8 +59,8 @@ def test_create_image_export_pdf(tmp_path):
     assert os.path.getsize(output_file) > 0
 
 
-@unittest.skipIf(len(sicd_files) == 0, 'No sicd files found')
-@unittest.skipIf(PIL is None, 'Pillow is not available')
+@pytest.mark.skipif(len(sicd_files) == 0, reason='No sicd files found')
+@pytest.mark.skipif(PIL is None, reason='Pillow is not available')
 def test_create_image_export_from_file_path(tmp_path):
     output_file = str(tmp_path / 'export.jpg')
     result = create_image_export(
@@ -73,8 +71,8 @@ def test_create_image_export_from_file_path(tmp_path):
     assert os.path.getsize(output_file) > 0
 
 
-@unittest.skipIf(len(sicd_files) == 0, 'No sicd files found')
-@unittest.skipIf(PIL is None, 'Pillow is not available')
+@pytest.mark.skipif(len(sicd_files) == 0, reason='No sicd files found')
+@pytest.mark.skipif(PIL is None, reason='Pillow is not available')
 def test_create_image_export_bad_format(tmp_path):
     reader = get_test_reader()
     output_file = str(tmp_path / 'export.tiff')

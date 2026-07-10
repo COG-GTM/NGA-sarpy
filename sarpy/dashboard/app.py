@@ -128,9 +128,20 @@ async function selectFile(name) {
   img.src = 'api/files/' + encodeURIComponent(name) + '/preview?t=' + Date.now();
   const res = await fetch('api/files/' + encodeURIComponent(name) + '/metadata');
   const meta = await res.json();
-  const rows = Object.entries(meta)
-    .map(([k, v]) => '<tr><td>' + k + '</td><td>' + String(v) + '</td></tr>').join('');
-  document.getElementById('metadata').innerHTML = '<table>' + rows + '</table>';
+  const table = document.createElement('table');
+  for (const [k, v] of Object.entries(meta)) {
+    const tr = document.createElement('tr');
+    const td1 = document.createElement('td');
+    td1.textContent = k;
+    const td2 = document.createElement('td');
+    td2.textContent = String(v);
+    tr.appendChild(td1);
+    tr.appendChild(td2);
+    table.appendChild(tr);
+  }
+  const container = document.getElementById('metadata');
+  container.innerHTML = '';
+  container.appendChild(table);
 }
 
 document.getElementById('export-btn').onclick = () => {
@@ -273,21 +284,27 @@ def create_app(data_directory):
     async def file_metadata(file_name: str):
         full_path = _resolve_file(file_name)
         reader = _open_reader(full_path)
-        sicd = reader.get_sicds_as_tuple()[0]
-        return _summarize_sicd(sicd)
+        try:
+            sicd = reader.get_sicds_as_tuple()[0]
+            return _summarize_sicd(sicd)
+        finally:
+            reader.close()
 
     @app.get('/api/files/{file_name}/preview')
     async def file_preview(file_name: str):
         full_path = _resolve_file(file_name)
-        reader = _open_reader(full_path)
         preview_path = os.path.join(
             tempfile.gettempdir(),
             'sarpy_dashboard_preview_{}.jpg'.format(os.path.splitext(file_name)[0]))
         if not os.path.isfile(preview_path) or \
                 os.path.getmtime(preview_path) < os.path.getmtime(full_path):
-            await asyncio.to_thread(
-                create_image_export, reader, preview_path,
-                pixel_limit=PREVIEW_PIXEL_LIMIT, output_format='JPEG')
+            reader = _open_reader(full_path)
+            try:
+                await asyncio.to_thread(
+                    create_image_export, reader, preview_path,
+                    pixel_limit=PREVIEW_PIXEL_LIMIT, output_format='JPEG')
+            finally:
+                reader.close()
         return FileResponse(preview_path, media_type='image/jpeg')
 
     @app.get('/api/files/{file_name}/export')
@@ -299,16 +316,25 @@ def create_app(data_directory):
             raise HTTPException(status_code=400, detail='dpi must be between 50 and 2400')
         if remap_name not in remap.get_remap_names():
             raise HTTPException(status_code=400, detail='Unknown remap function')
+        remap_function = remap.get_registered_remap(remap_name)
+        if remap_function.bit_depth != 8:
+            raise HTTPException(
+                status_code=400, detail='Only 8-bit remap functions are supported for export')
         full_path = _resolve_file(file_name)
-        reader = _open_reader(full_path)
         stem = os.path.splitext(file_name)[0]
         out_name = '{}_export.{}'.format(stem, format)
-        out_path = os.path.join(tempfile.gettempdir(), 'sarpy_dashboard_' + out_name)
+        out_path = os.path.join(
+            tempfile.gettempdir(),
+            'sarpy_dashboard_{}_{}_{}dpi.{}'.format(stem, remap_name, dpi, format))
         output_format = 'JPEG' if format == 'jpg' else 'PDF'
-        await asyncio.to_thread(
-            create_image_export, reader, out_path,
-            remap_function=remap.get_registered_remap(remap_name),
-            output_format=output_format, dpi=dpi)
+        reader = _open_reader(full_path)
+        try:
+            await asyncio.to_thread(
+                create_image_export, reader, out_path,
+                remap_function=remap_function,
+                output_format=output_format, dpi=dpi)
+        finally:
+            reader.close()
         media_type = 'image/jpeg' if format == 'jpg' else 'application/pdf'
         return FileResponse(out_path, media_type=media_type, filename=out_name)
 
@@ -321,8 +347,8 @@ def create_app(data_directory):
                 await asyncio.sleep(POLL_INTERVAL_SECONDS)
                 current = set(_list_files())
                 new_files = sorted(current - known)
+                known = current
                 if new_files:
-                    known = current
                     await websocket.send_text(
                         json.dumps({'event': 'new_files', 'files': new_files}))
         except WebSocketDisconnect:
