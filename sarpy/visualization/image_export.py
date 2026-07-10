@@ -115,7 +115,10 @@ def get_orthorectified_array(reader, index=0, pixel_limit=None, remap_function=N
         ortho_helper, calculator=calculator, remap_function=remap_function,
         recalc_remap_globals=True)
 
-    image_data = numpy.zeros(ortho_iterator.ortho_data_size, dtype=ortho_iterator.remap_function.output_dtype)
+    data_shape = tuple(ortho_iterator.ortho_data_size)
+    if remap_function.dimension > 0:
+        data_shape = data_shape + (remap_function.dimension, )
+    image_data = numpy.zeros(data_shape, dtype=ortho_iterator.remap_function.output_dtype)
     for data, start_indices in ortho_iterator:
         image_data[start_indices[0]:start_indices[0] + data.shape[0],
                    start_indices[1]:start_indices[1] + data.shape[1]] = data

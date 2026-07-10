@@ -249,7 +249,6 @@ def create_app(data_directory):
 
     app = FastAPI(title='SarPy SAR Dashboard')
     app.state.data_directory = data_directory
-    app.state.known_files = set()
 
     def _list_files():
         return sorted(
@@ -283,12 +282,16 @@ def create_app(data_directory):
     @app.get('/api/files/{file_name}/metadata')
     async def file_metadata(file_name: str):
         full_path = _resolve_file(file_name)
-        reader = _open_reader(full_path)
-        try:
-            sicd = reader.get_sicds_as_tuple()[0]
-            return _summarize_sicd(sicd)
-        finally:
-            reader.close()
+
+        def _fetch_metadata():
+            reader = _open_reader(full_path)
+            try:
+                sicd = reader.get_sicds_as_tuple()[0]
+                return _summarize_sicd(sicd)
+            finally:
+                reader.close()
+
+        return await asyncio.to_thread(_fetch_metadata)
 
     @app.get('/api/files/{file_name}/preview')
     async def file_preview(file_name: str):

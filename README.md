@@ -124,7 +124,7 @@ message indicating the missing optional dependency.
   `pillow` package.
 
 - The optional real-time dashboard, presented in the `sarpy.dashboard` subpackage,
-  requires additional web dependencies (`fastapi`, `uvicorn`, `watchdog`, `pillow`)
+  requires additional web dependencies (`fastapi`, `uvicorn`, `pillow`)
   listed in `sarpy/dashboard/requirements.txt`. These are intentionally kept
   separate from the core library requirements.
 

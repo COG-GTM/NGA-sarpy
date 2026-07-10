@@ -35,8 +35,11 @@ def main(args=None):
     parser.add_argument(
         '-f', '--format', default='jpg', choices=['jpg', 'pdf'],
         help="The output image format. (default: %(default)s)")
+    remap_names = [
+        name for name in remap.get_remap_names()
+        if remap.get_registered_remap(name).bit_depth == 8]
     parser.add_argument(
-        '-r', '--remap', default=remap.get_remap_names()[0], choices=remap.get_remap_names(),
+        '-r', '--remap', default=remap_names[0], choices=remap_names,
         help="The pixel value remap function. (default: %(default)s)")
     parser.add_argument(
         '-s', '--size', default=-1, type=int,
@@ -60,10 +63,13 @@ def main(args=None):
     reader = open_complex(args.input_file)
     pixel_limit = None if args.size == -1 else args.size
     output_format = 'JPEG' if args.format == 'jpg' else 'PDF'
-    create_image_export(
-        reader, args.output_file, index=args.index,
-        remap_function=remap.get_registered_remap(args.remap),
-        pixel_limit=pixel_limit, output_format=output_format, dpi=args.dpi)
+    try:
+        create_image_export(
+            reader, args.output_file, index=args.index,
+            remap_function=remap.get_registered_remap(args.remap),
+            pixel_limit=pixel_limit, output_format=output_format, dpi=args.dpi)
+    finally:
+        reader.close()
 
 
 if __name__ == '__main__':
