@@ -4,6 +4,11 @@ SarPy follows a continuous release process, so there are fairly frequent release
 Since essentially every (squash merge) commit corresponds to a release, specific 
 release points are not being annotated in GitHub.
 
+## [Unreleased]
+### Added
+- `sarpy/utils/dump_metadata.py`, a command-line utility to dump SICD, SIDD, or CPHD metadata to JSON (with an optional `--summary` view of key SICD collection fields)
+- Unit tests for `sarpy/utils/dump_metadata.py`
+
 ## [1.3.60] - 2025-01-24
 ### Added
 - Support for file objects in `sarpy.io.phase_history.converter.open_phase_history`
