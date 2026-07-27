@@ -65,26 +65,35 @@ def test_tcp_roundtrip_loopback():
     server.listen(1)
     port = server.getsockname()[1]
 
-    received = {}
+    # A footprint with many vertices exercises the full sendall() path.
+    big_footprint = Footprint(
+        [GeoPoint(i * 1e-4, i * 1e-4) for i in range(2000)]
+    )
+    event = build_footprint_event(big_footprint)
+    expected = len(ET.tostring(event, encoding="unicode").encode("utf-8")) + 1  # +\n
+
+    received = {"data": b""}
 
     def _serve():
         conn, _ = server.accept()
-        data = conn.recv(65535)
-        received["data"] = data
+        while len(received["data"]) < expected:
+            chunk = conn.recv(65535)
+            if not chunk:
+                break
+            received["data"] += chunk
         conn.close()
 
     thread = threading.Thread(target=_serve)
     thread.start()
 
-    event = build_footprint_event(
-        Footprint([GeoPoint(1, 1), GeoPoint(1, 2), GeoPoint(2, 2), GeoPoint(2, 1)])
-    )
     with CoTSender(host="127.0.0.1", port=port, protocol="tcp") as sender:
-        sender.send_event(event)
+        sent = sender.send_event(event)
 
     thread.join(timeout=10.0)
     server.close()
 
-    payload = received["data"].decode("utf-8").strip()
-    parsed = ET.fromstring(payload)
+    assert sent == expected
+    assert len(received["data"]) == expected
+    parsed = ET.fromstring(received["data"].decode("utf-8").strip())
     assert parsed.get("type") == event.get("type")
+    assert len(parsed.findall("./detail/shape/polyline/vertex")) == 2000

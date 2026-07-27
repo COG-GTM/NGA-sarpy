@@ -57,8 +57,12 @@ def _base_event(
     ce: float = 9999999.0,
     le: float = 9999999.0,
 ) -> ET.Element:
-    start = start or _utc_now()
-    stale = start + _dt.timedelta(seconds=stale_seconds)
+    now = _utc_now()
+    start = start or now
+    # ``start`` is the validity onset (the imagery's collect time when known),
+    # but ``stale`` must be anchored to emission time so that CoT for archived
+    # imagery is not already expired when it reaches a TAK client.
+    stale = now + _dt.timedelta(seconds=stale_seconds)
     event = ET.Element(
         "event",
         {
@@ -66,7 +70,7 @@ def _base_event(
             "uid": uid,
             "type": cot_type,
             "how": how,
-            "time": _fmt_time(_utc_now()),
+            "time": _fmt_time(now),
             "start": _fmt_time(start),
             "stale": _fmt_time(stale),
         },

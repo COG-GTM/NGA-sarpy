@@ -96,6 +96,31 @@ def test_signed32_conversion():
     assert _signed32(0xFFFF0000) == 0xFFFF0000 - (1 << 32)
 
 
+def test_stale_anchored_to_emission_not_collect_time():
+    import datetime as dt
+
+    from sensor_to_shooter.cot import _fmt_time
+
+    # Collection time years in the past.
+    collect = dt.datetime(2022, 12, 5, 18, 41, 24, tzinfo=dt.timezone.utc)
+    product = TargetProduct(
+        sensor="S",
+        collect_start="2022-12-05T18:41:24.000Z",
+        footprint=_footprint(),
+        scp=GeoPoint(0, 0),
+        detections=[_detection()],
+    )
+    events = build_events(product, stale_seconds=300.0)
+    now = dt.datetime.now(tz=dt.timezone.utc)
+    for ev in events:
+        # start stays at the collect time...
+        assert ev.get("start") == _fmt_time(collect)
+        # ...but stale is ~now + 300s, i.e. in the future, not already expired.
+        stale = dt.datetime.fromisoformat(ev.get("stale").replace("Z", "+00:00"))
+        assert stale > now
+        assert (stale - now).total_seconds() <= 301
+
+
 def test_fmt_time_has_millis_and_z():
     import datetime as dt
 

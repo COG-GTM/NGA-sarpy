@@ -96,7 +96,10 @@ class CoTSender(AbstractContextManager):
         if self.protocol == "udp":
             return self._sock.sendto(payload, (self.host, self.port))
         # TCP streams concatenate events; a trailing newline keeps parsers happy.
-        return self._sock.send(payload + b"\n")
+        # sendall loops until every byte is transmitted (send may write fewer).
+        framed = payload + b"\n"
+        self._sock.sendall(framed)
+        return len(framed)
 
     def send_events(self, events: Iterable[ET.Element]) -> List[int]:
         return [self.send_event(e) for e in events]
