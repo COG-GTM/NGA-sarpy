@@ -74,7 +74,11 @@ class CoTSender(AbstractContextManager):
             )
         else:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            sock.connect((self.host, self.port))
+            try:
+                sock.connect((self.host, self.port))
+            except OSError:
+                sock.close()
+                raise
         self._sock = sock
 
     def close(self) -> None:

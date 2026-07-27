@@ -149,8 +149,10 @@ class CoTOverlayHandler:
         if isinstance(xml, ET.Element):
             return xml
         if isinstance(xml, bytes):
+            if len(xml) > _MAX_COT_BYTES:
+                raise ValueError("CoT payload exceeds maximum allowed size.")
             xml = xml.decode("utf-8")
-        if len(xml) > _MAX_COT_BYTES:
+        elif len(xml.encode("utf-8")) > _MAX_COT_BYTES:
             raise ValueError("CoT payload exceeds maximum allowed size.")
         if _DTD_RE.search(xml):
             raise ValueError(
