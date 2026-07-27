@@ -109,11 +109,15 @@ class SICDTargetExtractor:
     @classmethod
     def from_file(cls, file_name: str, index: int = 0) -> "SICDTargetExtractor":
         reader = open_complex(file_name)
-        sicds = reader.get_sicds_as_tuple()
-        if not sicds:
+        try:
+            sicds = reader.get_sicds_as_tuple()
+            if not sicds:
+                raise ValueError("No SICD metadata found in {}".format(file_name))
+            sicd = sicds[index]
+        except Exception:
             reader.close()
-            raise ValueError("No SICD metadata found in {}".format(file_name))
-        return cls(sicds[index], reader=reader, index=index, owns_reader=True)
+            raise
+        return cls(sicd, reader=reader, index=index, owns_reader=True)
 
     def close(self) -> None:
         """Close the underlying reader if this extractor opened it."""

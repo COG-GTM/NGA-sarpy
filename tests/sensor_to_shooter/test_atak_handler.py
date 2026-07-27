@@ -1,3 +1,5 @@
+import pytest
+
 from sensor_to_shooter.atak.cot_handler import CoTOverlayHandler, HostileContactOverlay
 from sensor_to_shooter.cot import build_detection_event, build_footprint_event
 from sensor_to_shooter.sicd_target import Detection, Footprint, GeoPoint
@@ -72,7 +74,29 @@ def test_overlay_to_geojson():
 
 
 def test_non_event_raises():
-    import pytest
-
     with pytest.raises(ValueError):
         CoTOverlayHandler().handle("<notanevent/>")
+
+
+def test_billion_laughs_payload_rejected():
+    # A DTD with nested entity definitions is the classic entity-expansion DoS.
+    payload = (
+        '<?xml version="1.0"?>'
+        '<!DOCTYPE event ['
+        '<!ENTITY a "aaaaaaaaaa">'
+        '<!ENTITY b "&a;&a;&a;&a;&a;&a;&a;&a;&a;&a;">'
+        ']>'
+        '<event version="2.0" uid="x" type="a-h-G">'
+        '<point lat="1" lon="1" hae="0"/>'
+        '<detail><contact callsign="&b;"/></detail>'
+        '</event>'
+    )
+    with pytest.raises(ValueError):
+        CoTOverlayHandler().handle(payload)
+
+
+def test_oversized_payload_rejected():
+    from sensor_to_shooter.atak.cot_handler import _MAX_COT_BYTES
+
+    with pytest.raises(ValueError):
+        CoTOverlayHandler().handle("<event>" + "x" * _MAX_COT_BYTES + "</event>")

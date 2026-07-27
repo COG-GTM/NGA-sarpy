@@ -11,11 +11,18 @@ thin Java/Kotlin shim.
 from __future__ import annotations
 
 import logging
+import re
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Tuple, Union
 from xml.etree import ElementTree as ET
 
 logger = logging.getLogger(__name__)
+
+# CoT datagrams arrive from the network, so guard the stdlib XML parser against
+# entity-expansion ("billion laughs") DoS: valid CoT never carries a DTD, so we
+# reject any DOCTYPE/ENTITY declaration and cap the payload size.
+_MAX_COT_BYTES = 1_000_000
+_DTD_RE = re.compile(r"<!\s*(DOCTYPE|ENTITY)\b", re.IGNORECASE)
 
 HOSTILE_AFFILIATION = "h"
 DEFAULT_HOSTILE_COLOR = "#FFFF0000"       # opaque red
@@ -143,6 +150,12 @@ class CoTOverlayHandler:
             return xml
         if isinstance(xml, bytes):
             xml = xml.decode("utf-8")
+        if len(xml) > _MAX_COT_BYTES:
+            raise ValueError("CoT payload exceeds maximum allowed size.")
+        if _DTD_RE.search(xml):
+            raise ValueError(
+                "CoT payload contains a DTD/entity declaration; rejected."
+            )
         return ET.fromstring(xml)
 
     @staticmethod
@@ -162,8 +175,6 @@ class CoTOverlayHandler:
         polyline = detail.find("./shape/polyline")
         if polyline is None:
             # Not a drawing-shape event.
-            if not event.get("type", "").startswith("u-d-f"):
-                return None
             return None
         vertices: List[Tuple[float, float]] = []
         for vertex in polyline.findall("vertex"):

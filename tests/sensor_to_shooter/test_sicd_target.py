@@ -63,3 +63,16 @@ def test_build_product_from_synthetic(synthetic_sicd):
     assert product.detections
     assert product.sensor
     assert product.collect_start is not None
+
+
+def test_from_file_bad_index_closes_reader(synthetic_sicd):
+    # An out-of-range index must not leak the opened reader.
+    with pytest.raises(IndexError):
+        SICDTargetExtractor.from_file(synthetic_sicd, index=99)
+
+
+def test_context_manager_closes_reader(synthetic_sicd):
+    with SICDTargetExtractor.from_file(synthetic_sicd) as extractor:
+        assert extractor.detect_targets(threshold_sigma=5.0)
+    # After exit the owned reader is released.
+    assert extractor._reader is None
