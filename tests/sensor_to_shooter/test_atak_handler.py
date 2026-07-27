@@ -73,6 +73,17 @@ def test_overlay_to_geojson():
             assert lat == 1.5 and lon == 1.5
 
 
+def test_open_polyline_emits_linestring():
+    from sensor_to_shooter.atak.cot_handler import MapPolygon
+
+    overlay = HostileContactOverlay(
+        polygons=[MapPolygon(uid="p1", vertices=[(1, 1), (1, 2), (2, 2)], closed=False)]
+    )
+    feat = overlay.to_geojson()["features"][0]
+    assert feat["geometry"]["type"] == "LineString"
+    assert feat["geometry"]["coordinates"][0] != feat["geometry"]["coordinates"][-1]
+
+
 def test_non_event_raises():
     with pytest.raises(ValueError):
         CoTOverlayHandler().handle("<notanevent/>")

@@ -81,15 +81,23 @@ class HostileContactOverlay:
     def to_geojson(self) -> Dict:
         features: List[Dict] = []
         for poly in self.polygons:
+            # GeoJSON coordinates are [lon, lat]. Open polylines are emitted as
+            # LineStrings because Polygon linear rings must be closed per spec.
+            if poly.closed:
+                geometry = {
+                    "type": "Polygon",
+                    "coordinates": [[[lon, lat] for lat, lon in poly.ring()]],
+                }
+            else:
+                geometry = {
+                    "type": "LineString",
+                    "coordinates": [[lon, lat] for lat, lon in poly.vertices],
+                }
             features.append(
                 {
                     "type": "Feature",
                     "id": poly.uid,
-                    "geometry": {
-                        "type": "Polygon",
-                        # GeoJSON coordinates are [lon, lat].
-                        "coordinates": [[[lon, lat] for lat, lon in poly.ring()]],
-                    },
+                    "geometry": geometry,
                     "properties": {
                         "kind": "sar-footprint",
                         "callsign": poly.callsign,
