@@ -93,12 +93,16 @@ class SICDTargetExtractor:
         Image index within a multi-image reader.
     """
 
-    def __init__(self, sicd: SICDType, reader=None, index: int = 0):
+    def __init__(
+        self, sicd: SICDType, reader=None, index: int = 0, owns_reader: bool = False
+    ):
         if sicd is None:
             raise ValueError("A SICDType metadata structure is required.")
         self._sicd = sicd
         self._reader = reader
         self._index = index
+        # Only readers we opened ourselves (via from_file) should be closed by us.
+        self._owns_reader = owns_reader
 
     # -- construction ----------------------------------------------------
 
@@ -107,8 +111,23 @@ class SICDTargetExtractor:
         reader = open_complex(file_name)
         sicds = reader.get_sicds_as_tuple()
         if not sicds:
+            reader.close()
             raise ValueError("No SICD metadata found in {}".format(file_name))
-        return cls(sicds[index], reader=reader, index=index)
+        return cls(sicds[index], reader=reader, index=index, owns_reader=True)
+
+    def close(self) -> None:
+        """Close the underlying reader if this extractor opened it."""
+        if self._owns_reader and self._reader is not None:
+            try:
+                self._reader.close()
+            finally:
+                self._reader = None
+
+    def __enter__(self) -> "SICDTargetExtractor":
+        return self
+
+    def __exit__(self, *exc) -> None:
+        self.close()
 
     @classmethod
     def from_xml_file(cls, xml_file: str) -> "SICDTargetExtractor":
@@ -170,11 +189,14 @@ class SICDTargetExtractor:
         max_detections: int = 50,
         min_separation_px: int = 8,
     ) -> List[Detection]:
-        """Run a simple cell-averaging CFAR-style amplitude detector.
+        """Run a simple global-threshold amplitude detector.
 
         Reads the (optionally decimated) magnitude image, flags pixels whose
-        amplitude exceeds ``mean + threshold_sigma * std``, groups adjacent hits
-        into targets, and projects each target centroid to the ground.
+        amplitude exceeds a single global threshold ``mean + threshold_sigma * std``
+        computed over the whole scene, groups adjacent hits into targets, and
+        projects each target centroid to the ground. This is not a sliding-window
+        cell-averaging CFAR; a global threshold is adequate for the low-clutter
+        detection this pipeline targets.
 
         Requires that the extractor was created with pixel access (``from_file``).
         """

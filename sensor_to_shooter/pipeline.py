@@ -56,7 +56,10 @@ class SensorToShooterPipeline:
 
     def run_file(self, sicd_file: str, detect: bool = True) -> PipelineResult:
         extractor = SICDTargetExtractor.from_file(sicd_file)
-        return self._run_extractor(extractor, detect=detect)
+        try:
+            return self._run_extractor(extractor, detect=detect)
+        finally:
+            extractor.close()
 
     def run_extractor(
         self, extractor: SICDTargetExtractor, detect: bool = True

@@ -57,8 +57,9 @@ class CoTListener:
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         sock.bind((self.bind_host, self.port))
         if self.group:
+            # '=' avoids native alignment padding, yielding the exact 8-byte ip_mreq.
             mreq = struct.pack(
-                "4sl", socket.inet_aton(self.group), socket.INADDR_ANY
+                "=4sl", socket.inet_aton(self.group), socket.INADDR_ANY
             )
             sock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
         self._sock = sock

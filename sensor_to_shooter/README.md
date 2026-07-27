@@ -10,7 +10,7 @@ hostile-contact overlay with the SAR image footprint drawn as a polygon.
      │                                                     ▲
      ▼                                                     │
  SICDTargetExtractor ──► TargetProduct ──► CoT events ──► CoTSender ──► UDP/TCP
- (footprint + CFAR      (footprint,        (a-h-G hostile   (SA mesh
+ (footprint + threshold (footprint,        (a-h-G hostile   (SA mesh
   detections via         detections,        contacts +       multicast
   sarpy projection)      sensor meta)        u-d-f polygon)   or TCP)
                                                      │
@@ -24,7 +24,7 @@ hostile-contact overlay with the SAR image footprint drawn as a polygon.
 
 | Module | Responsibility |
 | --- | --- |
-| `sicd_target.py` | Open a SICD with SarPy, extract the `GeoData.ImageCorners` footprint, run a cell-averaging CFAR-style amplitude detector, and project detections to WGS-84 via `image_to_ground_geo`. |
+| `sicd_target.py` | Open a SICD with SarPy, extract the `GeoData.ImageCorners` footprint, run a global-threshold amplitude detector (`mean + kσ`), and project detections to WGS-84 via `image_to_ground_geo`. |
 | `cot.py` | Build MITRE CoT 2.0 XML: `a-h-G` hostile-ground contacts per detection and a `u-d-f` drawing-shape polygon for the footprint. |
 | `dissemination.py` | `CoTSender` — emit events over UDP (SA multicast `239.2.3.1:6969` by default) or a TCP stream to a TAK Server input. |
 | `pipeline.py` | `SensorToShooterPipeline` — orchestrate read → extract → build → disseminate. |
